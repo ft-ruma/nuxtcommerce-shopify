@@ -1,8 +1,8 @@
 // app/app.config.ts
 export default defineAppConfig({
   site: {
-    name: 'NuxtCommerce',
-    description: 'NuxtCommerce is a dynamic e-commerce solution developed with Nuxt 4 and GraphQL, powered by Shopify.',
+    name: 'Branded Gallery Dept.',
+    description: 'Branded Gallery Dept. is a multi-brand storefront built with Nuxt 4 and powered by Shopify.',
   },
   ui: {
     primary: 'red',
