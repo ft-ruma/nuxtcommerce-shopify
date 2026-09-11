@@ -9,12 +9,17 @@ const suggestionMenu = ref(false);
 const mobileMenu = ref(false);
 const activeMobileSection = ref('Shop');
 const searchPanelRef = ref(null);
+const searchInputRef = ref(null);
 const cartPanelRef = ref(null);
 const mobileMenuRef = ref(null);
 const navRef = ref(null);
 const cartModal = ref(false);
 const activeMenu = ref('');
+const isListening = ref(false);
+const voiceSupported = ref(false);
+const voiceError = ref('');
 let menuCloseTimer;
+let recognition;
 const { cart } = useCart();
 const localePath = useLocalePath();
 
@@ -74,9 +79,84 @@ const brandItems = ['Allen Solly', 'Adidas', 'Under Armour', 'Puma', 'ALDO', 'U.
 const mobileSections = ['Shop', 'Brands', 'New Arrivals', 'Sale'];
 
 const search = () => {
+  stopVoiceSearch();
   router.push({ path: localePath('/'), query: { ...route.query, q: searchQuery.value || undefined } });
   suggestionMenu.value = false;
   mobileMenu.value = false;
+};
+
+const openSearch = () => {
+  suggestionMenu.value = true;
+  voiceError.value = '';
+  nextTick(() => searchInputRef.value?.focus());
+};
+
+const closeSearch = () => {
+  suggestionMenu.value = false;
+  stopVoiceSearch();
+};
+
+const getSpeechRecognition = () => {
+  if (!import.meta.client) return null;
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+};
+
+const stopVoiceSearch = () => {
+  try {
+    recognition?.stop();
+  } catch {
+    /* already stopped */
+  }
+  isListening.value = false;
+};
+
+const startVoiceSearch = () => {
+  const SpeechRecognition = getSpeechRecognition();
+  if (!SpeechRecognition) {
+    voiceError.value = 'Voice search is not supported in this browser.';
+    return;
+  }
+
+  stopVoiceSearch();
+  voiceError.value = '';
+  recognition = new SpeechRecognition();
+  recognition.lang = navigator.language || 'en-US';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    isListening.value = true;
+  };
+
+  recognition.onresult = event => {
+    const transcript = Array.from(event.results)
+      .map(result => result[0]?.transcript || '')
+      .join(' ')
+      .trim();
+    if (transcript) searchQuery.value = transcript;
+  };
+
+  recognition.onerror = event => {
+    isListening.value = false;
+    if (event.error === 'not-allowed') voiceError.value = 'Allow microphone access to search by voice.';
+    else if (event.error !== 'aborted' && event.error !== 'no-speech') voiceError.value = 'Voice search could not start. Try typing instead.';
+  };
+
+  recognition.onend = () => {
+    isListening.value = false;
+  };
+
+  try {
+    recognition.start();
+  } catch {
+    voiceError.value = 'Voice search could not start. Try typing instead.';
+  }
+};
+
+const toggleVoiceSearch = () => {
+  if (isListening.value) stopVoiceSearch();
+  else startVoiceSearch();
 };
 
 async function fetch() {
@@ -92,7 +172,10 @@ async function fetch() {
   }
 }
 
-onMounted(fetch);
+onMounted(() => {
+  voiceSupported.value = !!getSpeechRecognition();
+  window.addEventListener('keydown', onGlobalSearchShortcut);
+});
 
 const throttledFetch = useDebounceFn(async () => {
   await fetch();
@@ -101,15 +184,42 @@ const throttledFetch = useDebounceFn(async () => {
 watch(
   () => searchQuery.value,
   () => {
+    if (!suggestionMenu.value) return;
     isLoading.value = true;
     throttledFetch();
   }
 );
 
+watch(suggestionMenu, open => {
+  if (open) {
+    isLoading.value = true;
+    fetch();
+    nextTick(() => searchInputRef.value?.focus());
+  } else {
+    stopVoiceSearch();
+  }
+});
+
+const onSearchKeydown = event => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeSearch();
+  }
+};
+
+const onGlobalSearchShortcut = event => {
+  if (suggestionMenu.value || cartModal.value || mobileMenu.value) return;
+  const target = event.target;
+  if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+  if (event.key === '/' || ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k')) {
+    event.preventDefault();
+    openSearch();
+  }
+};
+
 const clearSearch = () => {
-  suggestionMenu.value = false;
   searchQuery.value = '';
-  router.push({ query: { ...route.query, q: undefined } });
+  nextTick(() => searchInputRef.value?.focus());
 };
 
 const openMenu = label => {
@@ -128,10 +238,6 @@ const toggleMenu = label => {
   window.clearTimeout(menuCloseTimer);
   activeMenu.value = activeMenu.value === label ? '' : label;
 };
-
-onClickOutside(searchPanelRef, () => {
-  suggestionMenu.value = false;
-});
 
 onClickOutside(cartPanelRef, () => {
   cartModal.value = false;
@@ -154,13 +260,15 @@ watch(
 
 onBeforeUnmount(() => {
   window.clearTimeout(menuCloseTimer);
+  window.removeEventListener('keydown', onGlobalSearchShortcut);
+  stopVoiceSearch();
 });
 
 const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity || 0), 0));
 </script>
 
 <template>
-  <div class="fixed z-40 flex h-[72px] w-full flex-row items-center bg-white/90 px-3 backdrop-blur-sm dark:bg-black/90 dark:backdrop-blur-lg lg:h-20 lg:px-5">
+  <div class="fixed z-40 flex h-[72px] w-full flex-row items-center bg-white px-3 shadow-[0_1px_0_rgba(0,0,0,.06)] lg:h-20 lg:px-5">
     <div class="flex w-full flex-nowrap items-center gap-2">
       <button
         type="button"
@@ -175,8 +283,9 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
         class="flex min-h-[52px] items-center gap-3 rounded-2xl px-2 transition hover:bg-black/5 active:scale-95 dark:hover:bg-white/15 max-lg:min-h-12"
         :to="localePath('/')">
         <img class="h-8 w-8 rounded-lg bg-[#b31015]" src="/logo.svg" alt="Branded Gallery Dept. logo" loading="lazy" title="Branded Gallery Dept." />
-        <div class="hidden leading-tight sm:block">
-          <div class="text-xs font-black tracking-[0.12em] text-black dark:text-white xl:text-base">BRANDED GALLERY DEPT.</div>
+        <div class="hidden leading-none sm:block">
+          <div class="text-xs font-black tracking-[0.12em] text-black xl:text-sm">BRANDED GALLERY</div>
+          <div class="text-xs font-black tracking-[0.12em] text-black xl:text-sm">DEPT.</div>
         </div>
       </NuxtLink>
 
@@ -256,59 +365,47 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
         </NuxtLink>
       </nav>
 
-      <div class="hidden flex-shrink flex-grow flex-col text-sm font-semibold text-[#111] dark:text-[#eee] md:flex">
-        <div
-          :class="[
-            'flex h-12 flex-grow rounded-full pl-4 pr-3 transition-all hover:bg-black/10 hover:dark:bg-white/20',
-            suggestionMenu ? 'bg-black/10 dark:bg-white/20' : 'bg-black/5 dark:bg-white/15',
-          ]">
-          <div class="flex w-full items-center gap-4" @click="suggestionMenu = true">
-            <div v-if="!suggestionMenu" class="flex text-neutral-500 dark:text-neutral-400">
-              <UIcon name="i-iconamoon-search-bold" size="20" />
-            </div>
-            <div class="flex w-full">
-              <input
-                v-model="searchQuery"
-                class="w-full bg-transparent py-2 outline-none placeholder:text-[#757575] placeholder:dark:text-neutral-400"
-                type="text"
-                @keyup.enter="search"
-                :placeholder="route.query.category ? $t('search.placeholder_in_category', { category: route.query.category }) : 'Search by category, brand, style, color'" />
-              <div v-if="searchQuery || suggestionMenu" class="flex cursor-pointer items-center justify-center transition-all" @click.stop="clearSearch">
-                <UIcon v-if="!isLoading" class="text-black dark:text-white" name="i-iconamoon-close-circle-1-fill" size="24" />
-                <UIcon v-else name="i-svg-spinners-bars-rotate-fade" size="20" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div class="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          aria-label="Search"
+          title="Search"
+          class="flex min-h-12 min-w-12 items-center justify-center rounded-full bg-black/5 transition hover:bg-black/10 active:scale-95 dark:bg-white/15 dark:hover:bg-white/20"
+          :class="suggestionMenu ? 'bg-black/10 dark:bg-white/20' : ''"
+          @click="openSearch">
+          <UIcon class="text-[#5f5f5f] dark:text-[#b7b7b7]" name="i-iconamoon-search-bold" size="26" />
+        </button>
 
-      <NuxtLink
-        aria-label="Wishlist"
-        exactActiveClass="!bg-black/10 dark:!bg-white/30"
-        class="hidden min-h-12 min-w-12 items-center justify-center rounded-full bg-black/5 transition hover:bg-black/10 active:scale-95 dark:bg-white/15 dark:hover:bg-white/20 sm:flex"
-        :to="localePath('/favorites')">
-        <UIcon class="text-[#5f5f5f] dark:text-[#b7b7b7]" name="i-iconamoon-heart-fill" size="26" />
-      </NuxtLink>
+        <NuxtLink
+          aria-label="Wishlist"
+          exactActiveClass="!bg-black/10 dark:!bg-white/30"
+          class="flex min-h-12 min-w-12 items-center justify-center rounded-full bg-black/5 transition hover:bg-black/10 active:scale-95 dark:bg-white/15 dark:hover:bg-white/20"
+          :to="localePath('/favorites')">
+          <UIcon class="text-[#5f5f5f] dark:text-[#b7b7b7]" name="i-iconamoon-heart-fill" size="26" />
+        </NuxtLink>
 
-      <button
-        type="button"
-        aria-label="Account"
-        title="Account"
-        class="hidden h-12 items-center justify-center rounded-full bg-black/5 px-4 text-sm font-bold transition hover:bg-black hover:text-white dark:bg-white/15 dark:hover:bg-white dark:hover:text-black xl:flex">
-        Account
-      </button>
+        <button
+          type="button"
+          aria-label="Account"
+          title="Account"
+          class="flex min-h-12 min-w-12 items-center justify-center rounded-full bg-black/5 transition hover:bg-black/10 active:scale-95 dark:bg-white/15 dark:hover:bg-white/20">
+          <UIcon class="text-[#5f5f5f] dark:text-[#b7b7b7]" name="i-iconamoon-profile-circle-fill" size="26" />
+        </button>
 
-      <button
-        class="relative flex min-h-12 min-w-12 cursor-pointer items-center justify-center rounded-full bg-black/5 transition hover:bg-black/10 active:scale-95 dark:bg-white/15 dark:hover:bg-white/20"
-        @mouseup="cartModal = !cartModal">
-        <UIcon class="text-[#5f5f5f] dark:text-[#b7b7b7]" name="i-iconamoon-shopping-bag-fill" size="26" />
-        <span v-if="totalQuantity" class="absolute right-1 top-1 flex h-[18px] w-[18px]">
-          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-alizarin-crimson-400 opacity-75"></span>
-          <span class="relative inline-flex h-[18px] w-[18px] items-center justify-center rounded-full bg-alizarin-crimson-700 text-[10px] font-semibold text-white shadow">
-            {{ totalQuantity }}
+        <button
+          type="button"
+          aria-label="Cart"
+          class="relative flex min-h-12 min-w-12 cursor-pointer items-center justify-center rounded-full bg-black/5 transition hover:bg-black/10 active:scale-95 dark:bg-white/15 dark:hover:bg-white/20"
+          @mouseup="cartModal = !cartModal">
+          <UIcon class="text-[#5f5f5f] dark:text-[#b7b7b7]" name="i-iconamoon-shopping-bag-fill" size="26" />
+          <span v-if="totalQuantity" class="absolute right-1 top-1 flex h-[18px] w-[18px]">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-alizarin-crimson-400 opacity-75"></span>
+            <span class="relative inline-flex h-[18px] w-[18px] items-center justify-center rounded-full bg-alizarin-crimson-700 text-[10px] font-semibold text-white shadow">
+              {{ totalQuantity }}
+            </span>
           </span>
-        </span>
-      </button>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -317,25 +414,20 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
     <aside ref="mobileMenuRef" class="fixed bottom-0 left-0 top-0 w-full max-w-sm overflow-auto rounded-r-[2rem] bg-white p-4 shadow-2xl dark:bg-black">
       <div class="mb-5 flex items-center justify-between">
         <div>
-          <div class="text-base font-black tracking-[0.12em]">BRANDED GALLERY DEPT.</div>
+          <div class="text-sm font-black tracking-[0.12em]">BRANDED GALLERY</div>
+          <div class="text-sm font-black tracking-[0.12em]">DEPT.</div>
         </div>
         <button type="button" class="rounded-full bg-black/5 px-4 py-2 text-sm font-bold dark:bg-white/15" @click="mobileMenu = false">Close</button>
       </div>
 
-      <div class="mb-4 rounded-2xl bg-black/5 p-3 dark:bg-white/15">
-        <div class="mb-2 text-xs font-black uppercase tracking-[0.2em] text-neutral-500">Search</div>
-        <div class="flex items-center gap-2">
-          <input
-            v-model="searchQuery"
-            class="w-full bg-transparent py-2 text-sm font-semibold outline-none"
-            type="text"
-            placeholder="Search brands, products, styles"
-            @keyup.enter="search" />
-          <button type="button" class="rounded-full bg-black px-4 py-2 text-sm font-bold text-white dark:bg-white dark:text-black" @click="search">Go</button>
-        </div>
-      </div>
-
       <div class="mb-4 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          class="col-span-2 flex items-center justify-center gap-2 rounded-2xl bg-black/5 px-4 py-3 text-sm font-black uppercase tracking-wide dark:bg-white/15"
+          @click="mobileMenu = false; openSearch()">
+          <UIcon name="i-iconamoon-search-bold" size="18" />
+          Search
+        </button>
         <button
           v-for="section in mobileSections"
           :key="section"
@@ -397,77 +489,98 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
     </aside>
   </div>
 
-  <div
-    v-if="suggestionMenu"
-    ref="searchPanelRef"
-    class="fixed left-0 right-0 top-[72px] z-50 w-full bg-white/85 backdrop-blur-sm dark:bg-black/85 dark:backdrop-blur-lg lg:top-20 lg:rounded-b-3xl">
-    <div class="max-h-[calc(100vh-72px)] overflow-auto lg:max-h-[calc(100vh-80px)]">
-      <!-- Loading State -->
-      <div v-if="isLoading" class="flex items-center justify-center h-80">
-        <div class="bg-black/10 dark:bg-white/20 flex rounded-full w-12 h-12 items-center justify-center skeleton">
-          <UIcon class="text-white dark:text-black" name="i-svg-spinners-8-dots-rotate" size="26" />
+  <div v-if="suggestionMenu" class="fixed inset-0 z-50 flex items-start justify-center px-3 pt-24 lg:pt-28">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-md" @click="closeSearch"></div>
+    <div ref="searchPanelRef" class="relative z-10 flex max-h-[min(80vh,760px)] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl" @keydown="onSearchKeydown">
+      <div class="border-b border-black/5 p-4">
+        <div class="flex items-center gap-2 rounded-full bg-black/5 px-3 py-2">
+          <UIcon class="text-[#5f5f5f]" name="i-iconamoon-search-bold" size="24" />
+          <input
+            ref="searchInputRef"
+            v-model="searchQuery"
+            class="w-full bg-transparent py-2 text-base font-semibold outline-none placeholder:text-neutral-400"
+            type="text"
+            enterkeyhint="search"
+            autocomplete="off"
+            :placeholder="isListening ? 'Listening… speak now' : 'Type or use voice to search'"
+            @keyup.enter="search" />
+          <button
+            v-if="searchQuery && !isListening"
+            type="button"
+            aria-label="Clear search"
+            class="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-black/10"
+            @click="clearSearch">
+            <UIcon v-if="!isLoading" name="i-iconamoon-close-circle-1-fill" size="22" />
+            <UIcon v-else name="i-svg-spinners-bars-rotate-fade" size="18" />
+          </button>
+          <button
+            v-if="voiceSupported"
+            type="button"
+            :aria-label="isListening ? 'Stop voice search' : 'Search with voice'"
+            :class="[
+              'flex h-10 w-10 items-center justify-center rounded-full transition',
+              isListening ? 'bg-[#b31015] text-white' : 'hover:bg-black/10 text-[#5f5f5f]',
+            ]"
+            @click="toggleVoiceSearch">
+            <UIcon :name="isListening ? 'i-iconamoon-microphone-fill' : 'i-iconamoon-microphone-duotone'" size="22" />
+          </button>
+          <button type="button" aria-label="Close search" class="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-black/10" @click="closeSearch">
+            <UIcon name="i-iconamoon-close" size="22" />
+          </button>
         </div>
+        <p v-if="voiceError" class="mt-2 px-2 text-xs font-semibold text-[#b31015]">{{ voiceError }}</p>
+        <p v-else class="mt-2 px-2 text-xs font-semibold text-neutral-500">
+          {{ isListening ? 'Listening… say a product, brand, or category' : 'Type a search, press Enter, or tap the microphone' }}
+        </p>
       </div>
-      <!-- Empty State -->
-      <div v-else-if="!searchResults.length" class="w-full items-center flex flex-col justify-center text-center p-8">
-        <div class="w-28 h-28 bg-black/10 dark:bg-white/20 rounded-full items-center justify-center flex">
-          <UIcon name="i-iconamoon-search-bold" class="w-16 h-16 dark:text-white" />
+
+      <div class="min-h-0 flex-1 overflow-auto">
+        <div v-if="isLoading" class="flex h-64 items-center justify-center">
+          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-black/10 skeleton">
+            <UIcon name="i-svg-spinners-8-dots-rotate" size="26" />
+          </div>
         </div>
-        <div class="font-semibold text-3xl my-6">
-          {{ $t('search.no_results_for_query') }}
-          <strong>{{ searchQuery }}</strong>
+        <div v-else-if="!searchResults.length" class="flex w-full flex-col items-center justify-center p-8 text-center">
+          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-black/5">
+            <UIcon name="i-iconamoon-search-bold" class="h-10 w-10 text-neutral-400" />
+          </div>
+          <div class="my-5 text-2xl font-semibold">
+            {{ $t('search.no_results_for_query') }}
+            <strong>{{ searchQuery }}</strong>
+          </div>
+          <div class="mb-2 max-w-md text-sm text-neutral-500">{{ $t('search.no_results_suggestion') }}</div>
         </div>
-        <div class="text-sm text-center mb-5 max-w-md">
-          {{ $t('search.no_results_suggestion') }}
-        </div>
-      </div>
-      <!-- Results State-->
-      <div v-else class="mx-auto p-3 lg:p-4 max-w-screen-2xl">
-        <h2 v-if="!searchQuery" class="text-2xl font-bold tracking-tight">{{ $t('search.new_products') }}</h2>
-        <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-5 mt-3 lg:mt-5">
-          <NuxtLink
-            @click="suggestionMenu = false"
-            :to="localePath(`/product/${product.slug}-${product.sku.split('-')[0]}`)"
-            v-for="(product, i) in searchResults"
-            :key="i"
-            class="group select-none">
-            <div class="cursor-pointer transition ease-[ease] duration-300">
-              <div class="relative pb-[133%] dark:shadow-[0_8px_24px_rgba(0,0,0,.5)] rounded-2xl overflow-hidden">
-                <NuxtImg
-                  :alt="product.name"
-                  loading="lazy"
-                  :title="product.name"
-                  :src="product.galleryImages.nodes[0].sourceUrl"
-                  class="absolute h-full w-full dark:bg-neutral-800 bg-neutral-200 object-cover" />
-                <NuxtImg
-                  :alt="product.name"
-                  loading="lazy"
-                  :title="product.name"
-                  :src="product.image.sourceUrl"
-                  class="absolute h-full w-full dark:bg-neutral-800 bg-neutral-200 object-cover transition-opacity duration-300 group-hover:opacity-0" />
+        <div v-else class="p-4">
+          <h2 v-if="!searchQuery" class="text-xl font-bold tracking-tight">{{ $t('search.new_products') }}</h2>
+          <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+            <NuxtLink
+              v-for="(product, i) in searchResults"
+              :key="i"
+              :to="localePath(`/product/${product.slug}-${product.sku.split('-')[0]}`)"
+              class="group select-none"
+              @click="closeSearch">
+              <div class="relative overflow-hidden rounded-2xl pb-[133%]">
+                <NuxtImg :alt="product.name" loading="lazy" :src="product.galleryImages.nodes[0].sourceUrl" class="absolute h-full w-full bg-neutral-200 object-cover" />
+                <NuxtImg :alt="product.name" loading="lazy" :src="product.image.sourceUrl" class="absolute h-full w-full bg-neutral-200 object-cover transition-opacity duration-300 group-hover:opacity-0" />
               </div>
-              <div class="grid gap-0.5 pt-3 pb-4 px-1.5 text-sm font-semibold">
+              <div class="grid gap-0.5 px-1.5 pb-2 pt-3 text-sm font-semibold">
                 <ProductPrice :sale-price="product.salePrice" :regular-price="product.regularPrice" variant="card" />
                 <div>{{ product.name }}</div>
-                <div class="font-normal text-[#5f5f5f] dark:text-[#a3a3a3]">
-                  {{ product.allPaStyle.nodes[0].name }}
-                </div>
               </div>
-            </div>
-          </NuxtLink>
+            </NuxtLink>
+          </div>
         </div>
       </div>
-      <div v-if="searchQuery && !isLoading && searchResults.length" class="flex items-center justify-center border-t border-black/10 dark:border-white/20 p-4">
-        <button
-          @click="search"
-          class="bg-black/15 dark:bg-white/15 hover:bg-black/10 hover:dark:bg-white/20 px-4 py-2 rounded-full active:scale-95 tracking-wide text-sm transition">
+
+      <div v-if="searchQuery && !isLoading && searchResults.length" class="flex items-center justify-center border-t border-black/10 p-4">
+        <button type="button" class="rounded-full bg-black px-5 py-2 text-sm font-bold tracking-wide text-white transition hover:bg-neutral-800 active:scale-95" @click="search">
           {{ $t('search.view_all_results') }}
         </button>
       </div>
     </div>
   </div>
-  <div v-if="suggestionMenu || cartModal" :class="['fixed inset-0 ', cartModal ? 'z-40' : 'z-30']">
-    <div class="w-full h-full bg-black/30 backdrop-blur-lg"></div>
+  <div v-if="cartModal" class="fixed inset-0 z-40">
+    <div class="h-full w-full bg-black/30 backdrop-blur-lg"></div>
   </div>
   <button
     v-if="cartModal"

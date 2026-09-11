@@ -4,7 +4,7 @@ const { site } = useAppConfig();
 const { name, description } = site;
 
 useHead({
-  htmlAttrs: { lang: 'en' },
+  htmlAttrs: { lang: 'en', class: 'light' },
   titleTemplate: (chunk?: string) => (chunk ? `${chunk} - ${name}` : name),
 });
 
@@ -25,7 +25,7 @@ useSeoMeta({
 
 <template>
   <AppHeader />
-  <main class="pt-[72px] lg:pt-20 min-h-[calc(100vh-72px)]">
+  <main class="min-h-[calc(100vh-72px)] bg-white pt-[72px] text-neutral-900 lg:pt-20">
     <NuxtPage />
   </main>
   <AppFooter />
@@ -35,9 +35,17 @@ useSeoMeta({
 </template>
 
 <style lang="postcss">
-.dark {
-  @apply bg-black text-neutral-100;
-  color-scheme: dark;
+html,
+body,
+#__nuxt {
+  @apply bg-white text-neutral-900;
+  color-scheme: light;
+}
+html.dark,
+html.dark body,
+html.dark #__nuxt {
+  @apply bg-white text-neutral-900;
+  color-scheme: light;
 }
 .dropdown-enter-active {
   @apply transition duration-200 ease-out;

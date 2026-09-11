@@ -6,6 +6,13 @@ export default defineNuxtConfig({
 
   modules: ["@vueuse/nuxt", "@nuxt/ui", "@nuxt/image", "notivue/nuxt", "@nuxtjs/i18n", "@nuxthub/core"],
 
+  colorMode: {
+    preference: "light",
+    fallback: "light",
+    storageKey: "bgd-color-mode",
+    classSuffix: "",
+  },
+
   i18n: {
     defaultLocale: "en",
     strategy: "prefix_except_default",
