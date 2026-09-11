@@ -14,16 +14,10 @@ const isDragging = ref(false);
 const dragThreshold = 10;
 let startX, scrollLeft;
 
-const colors = ['bg-[#dad5ff]', 'bg-[#ffe2eb]', 'bg-[#ffe4c2]', 'bg-[#fffd92]', 'bg-[#cfffcb]', 'bg-[#dbfff6]', 'bg-[#d7edff]'];
-
 const setCategory = category => {
   if (!isDragging.value && (route.query.category || '') !== category) {
     router.push({ query: { ...route.query, category: category || undefined } });
   }
-};
-
-const getCategoryClass = index => {
-  return `${colors[index % colors.length]} hover:brightness-90`;
 };
 
 const initializeDrag = e => {
@@ -64,49 +58,51 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="slider-container">
+  <div class="slider-container ml-2 min-w-0 flex-1 lg:ml-4">
     <div v-if="showPrev" class="slider-btn prev-btn"></div>
     <div class="slider-wrapper">
       <div ref="cardsSlider" class="cards-slider" @scroll="updateButtonVisibility">
-        <div
+        <button
+          type="button"
           @click="setCategory('')"
-          :class="[
-            'card ml-2 lg:ml-4 transition',
-            !route.query.category ? 'selected' : 'bg-[#efefef] hover:bg-[#e2e2e2] dark:bg-[#262626] hover:dark:bg-[#333] text-black dark:text-white',
-          ]">
+          :class="['card ml-0 transition', !route.query.category ? 'selected' : 'chip']">
           <div class="px-3.5">{{ $t('filter.all_categories') }}</div>
-        </div>
-        <div
-          v-for="(category, i) in categories"
+        </button>
+        <button
+          v-for="category in categories"
           :key="category.id"
+          type="button"
           @click="setCategory(category.name)"
-          :class="['card text-black transition cat-button-bezel', route.query.category === category.name ? 'selected' : getCategoryClass(i)]">
-          <NuxtImg
+          :class="['card transition', route.query.category === category.name ? 'selected' : 'chip']">
+          <img
+            v-if="category.image?.sourceUrl"
             :alt="category.name"
             loading="lazy"
-            :src="category.image?.sourceUrl"
-            class="w-[38px] h-[38px] rounded-full object-cover border border-transparent dark:bg-black/15 bg-white/30" />
+            :src="category.image.sourceUrl"
+            class="h-[38px] w-[38px] rounded-full object-cover" />
+          <div
+            v-else
+            class="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-black/10 text-xs font-black dark:bg-white/15">
+            {{ category.name.charAt(0) }}
+          </div>
           <div class="px-3.5">{{ category.name }}</div>
-        </div>
+        </button>
       </div>
     </div>
   </div>
 </template>
 
-<style lang="postcss">
-.cat-button-bezel {
-  box-shadow: inset 0 -1px 1px 0 rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
-}
-img {
-  @apply pointer-events-none;
+<style scoped lang="postcss">
+.chip {
+  @apply bg-neutral-100 text-black hover:bg-neutral-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20;
 }
 
 .selected {
-  @apply bg-red-600 lg:hover:bg-red-700 text-white dark:bg-alizarin-crimson-700 lg:hover:dark:bg-alizarin-crimson-800;
+  @apply bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200;
 }
 
 .slider-container {
-  @apply flex relative overflow-hidden items-center;
+  @apply relative flex items-center overflow-hidden;
 }
 
 .slider-wrapper {
@@ -114,7 +110,7 @@ img {
 }
 
 .cards-slider {
-  @apply flex cursor-grab w-full overflow-auto gap-2 lg:gap-4 pr-3 lg:pr-4;
+  @apply flex w-full cursor-grab gap-2 overflow-auto pr-3 lg:gap-3 lg:pr-4;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -128,37 +124,23 @@ img {
 }
 
 .card {
-  @apply cursor-pointer min-w-max select-none box-border flex items-center rounded-full p-1.5 transition-all;
+  @apply box-border flex min-w-max cursor-pointer select-none items-center rounded-full border-0 p-1.5 text-sm font-semibold transition-all;
   &:active {
-    @apply cursor-grab scale-95;
+    @apply scale-95 cursor-grab;
   }
 }
 
 .slider-btn {
-  @apply h-full w-14 cursor-pointer absolute top-0 z-10 flex items-center justify-center select-none;
+  @apply absolute top-0 z-10 flex h-full w-14 cursor-pointer select-none items-center justify-center;
 }
 
 .prev-btn {
   @apply left-0 bg-gradient-to-r from-white dark:from-black;
 }
 
-.next-btn {
-  right: 0;
-  background: #000;
-}
-
-.next-btn::before {
-  position: absolute;
-  content: '';
-  right: 56px;
-  width: 56px;
-  height: 100%;
-  background: linear-gradient(to left, rgb(0, 0, 0), transparent);
-}
-
 .slider-wrapper::before,
 .slider-wrapper::after {
-  @apply absolute h-full top-0 w-2 lg:w-4 z-10;
+  @apply absolute top-0 z-10 h-full w-2 lg:w-4;
   content: '';
   pointer-events: none;
 }

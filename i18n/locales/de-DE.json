@@ -35,6 +35,8 @@
   },
   "filter": {
     "all_categories": "Alle Kategorien",
+    "sort": "Sortieren",
+    "sort_by": "Sortieren nach",
     "newest": "Neueste",
     "price_low_high": "Preis: Niedrig bis Hoch",
     "price_high_low": "Preis: Hoch bis Niedrig"

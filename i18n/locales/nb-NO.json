@@ -35,6 +35,8 @@
   },
   "filter": {
     "all_categories": "Alle Kategorier",
+    "sort": "Sorter",
+    "sort_by": "Sorter etter",
     "newest": "Nyeste",
     "price_low_high": "Pris: Lav til Høy",
     "price_high_low": "Pris: Høy til Lav"

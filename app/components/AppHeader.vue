@@ -11,7 +11,10 @@ const activeMobileSection = ref('Shop');
 const searchPanelRef = ref(null);
 const cartPanelRef = ref(null);
 const mobileMenuRef = ref(null);
+const navRef = ref(null);
 const cartModal = ref(false);
+const activeMenu = ref('');
+let menuCloseTimer;
 const { cart } = useCart();
 const localePath = useLocalePath();
 
@@ -109,6 +112,23 @@ const clearSearch = () => {
   router.push({ query: { ...route.query, q: undefined } });
 };
 
+const openMenu = label => {
+  window.clearTimeout(menuCloseTimer);
+  activeMenu.value = label;
+};
+
+const closeMenu = () => {
+  window.clearTimeout(menuCloseTimer);
+  menuCloseTimer = window.setTimeout(() => {
+    activeMenu.value = '';
+  }, 200);
+};
+
+const toggleMenu = label => {
+  window.clearTimeout(menuCloseTimer);
+  activeMenu.value = activeMenu.value === label ? '' : label;
+};
+
 onClickOutside(searchPanelRef, () => {
   suggestionMenu.value = false;
 });
@@ -119,6 +139,21 @@ onClickOutside(cartPanelRef, () => {
 
 onClickOutside(mobileMenuRef, () => {
   mobileMenu.value = false;
+});
+
+onClickOutside(navRef, () => {
+  activeMenu.value = '';
+});
+
+watch(
+  () => route.fullPath,
+  () => {
+    activeMenu.value = '';
+  }
+);
+
+onBeforeUnmount(() => {
+  window.clearTimeout(menuCloseTimer);
 });
 
 const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity || 0), 0));
@@ -145,15 +180,27 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
         </div>
       </NuxtLink>
 
-      <nav class="hidden items-center gap-1 lg:flex">
-        <div v-for="menu in shopMenus" :key="menu.label" class="group">
+      <nav ref="navRef" class="hidden items-center gap-1 lg:flex">
+        <div
+          v-for="menu in shopMenus"
+          :key="menu.label"
+          class="relative"
+          @mouseenter="openMenu(menu.label)"
+          @mouseleave="closeMenu">
           <button
             type="button"
-            class="h-12 rounded-full px-3 text-xs font-black tracking-wide transition hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black xl:px-4">
+            class="relative z-[60] h-12 rounded-full px-3 text-xs font-black tracking-wide transition hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black xl:px-4"
+            :class="activeMenu === menu.label ? 'bg-black text-white dark:bg-white dark:text-black' : ''"
+            :aria-expanded="activeMenu === menu.label"
+            @click="toggleMenu(menu.label)">
             {{ menu.label }}
           </button>
-          <div class="pointer-events-none fixed left-5 right-5 top-20 z-50 opacity-0 transition group-hover:pointer-events-auto group-hover:opacity-100">
-            <div class="mx-auto grid max-w-screen-2xl grid-cols-4 gap-6 rounded-[2rem] border border-black/10 bg-white/95 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-black/95">
+          <div
+            v-show="activeMenu === menu.label"
+            class="fixed inset-x-0 top-[60px] z-50 px-5 pt-5"
+            @mouseenter="openMenu(menu.label)"
+            @mouseleave="closeMenu">
+            <div class="mx-auto grid max-h-[min(32rem,calc(100vh-8rem))] max-w-screen-2xl grid-cols-4 gap-6 overflow-y-auto overscroll-contain rounded-[2rem] border border-black/10 bg-white/95 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-black/95">
               <div v-for="section in menu.sections" :key="section.title">
                 <h3 class="mb-3 text-xs font-black uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">{{ section.title }}</h3>
                 <div class="grid gap-2">
@@ -161,7 +208,8 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
                     v-for="item in section.items"
                     :key="`${section.title}-${item.label}`"
                     :to="itemLink(item)"
-                    class="rounded-xl px-3 py-2 text-sm font-semibold transition hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                    class="rounded-xl px-3 py-2 text-sm font-semibold transition hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
+                    @click="activeMenu = ''">
                     {{ item.label }}
                   </NuxtLink>
                 </div>
@@ -170,21 +218,29 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
           </div>
         </div>
 
-        <div class="group">
+        <div class="relative" @mouseenter="openMenu('BRANDS')" @mouseleave="closeMenu">
           <button
             type="button"
-            class="h-12 rounded-full px-3 text-xs font-black tracking-wide transition hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black xl:px-4">
+            class="relative z-[60] h-12 rounded-full px-3 text-xs font-black tracking-wide transition hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black xl:px-4"
+            :class="activeMenu === 'BRANDS' ? 'bg-black text-white dark:bg-white dark:text-black' : ''"
+            :aria-expanded="activeMenu === 'BRANDS'"
+            @click="toggleMenu('BRANDS')">
             BRANDS
           </button>
-          <div class="pointer-events-none fixed left-5 right-5 top-20 z-50 opacity-0 transition group-hover:pointer-events-auto group-hover:opacity-100">
-            <div class="mx-auto max-w-screen-lg rounded-[2rem] border border-black/10 bg-white/95 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-black/95">
+          <div
+            v-show="activeMenu === 'BRANDS'"
+            class="fixed inset-x-0 top-[60px] z-50 px-5 pt-5"
+            @mouseenter="openMenu('BRANDS')"
+            @mouseleave="closeMenu">
+            <div class="mx-auto max-h-[min(32rem,calc(100vh-8rem))] max-w-screen-lg overflow-y-auto overscroll-contain rounded-[2rem] border border-black/10 bg-white/95 p-6 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-black/95">
               <h3 class="mb-4 text-center text-xs font-black uppercase tracking-[0.25em] text-neutral-500 dark:text-neutral-400">Shop By Brand</h3>
               <div class="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
                 <NuxtLink
                   v-for="brand in brandItems"
                   :key="brand"
                   :to="searchLink(brand)"
-                  class="rounded-2xl bg-black/5 px-4 py-4 text-center text-sm font-black uppercase tracking-wide transition hover:bg-black hover:text-white dark:bg-white/10 dark:hover:bg-white dark:hover:text-black">
+                  class="rounded-2xl bg-black/5 px-4 py-4 text-center text-sm font-black uppercase tracking-wide transition hover:bg-black hover:text-white dark:bg-white/10 dark:hover:bg-white dark:hover:text-black"
+                  @click="activeMenu = ''">
                   {{ brand }}
                 </NuxtLink>
               </div>

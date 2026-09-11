@@ -35,6 +35,8 @@
   },
   "filter": {
     "all_categories": "Alle Categorieën",
+    "sort": "Sorteren",
+    "sort_by": "Sorteren op",
     "newest": "Nieuwste",
     "price_low_high": "Prijs: Laag naar Hoog",
     "price_high_low": "Prijs: Hoog naar Laag"

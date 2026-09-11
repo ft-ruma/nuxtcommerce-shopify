@@ -23,7 +23,7 @@ useSeoMeta({
 
 onMounted(() => {
   $fetch('/api/categories').then(
-    response => (categoriesData.value = response.productCategories.nodes.filter(category => category.products.nodes.length && category.children.nodes.length))
+    response => (categoriesData.value = (response.productCategories?.nodes ?? []).filter(category => category.products?.nodes?.length))
   );
 });
 
@@ -36,11 +36,11 @@ const categories = computed(() => categoriesData.value);
       <div class="pb-[75%] relative overflow-hidden bg-neutral-200 dark:bg-neutral-800 skeleton rounded-[32px]"></div>
     </div>
     <NuxtLink v-for="category in categories" :key="category.id" :to="localePath(`/?category=${encodeURIComponent(category.name)}`)" class="w-full max-w-[444px] p-3 lg:p-2">
-      <div class="pb-[75%] relative overflow-hidden">
+      <div class="pb-[75%] relative overflow-hidden rounded-[32px] bg-neutral-200 dark:bg-neutral-800">
         <NuxtImg
           :alt="category.name"
           v-if="category.image"
-          class="object-cover absolute top-0 left-0 w-full h-full bg-neutral-200 dark:bg-neutral-800 rounded-[32px]"
+          class="object-cover absolute top-0 left-0 w-full h-full"
           :src="category.image.sourceUrl"
           loading="lazy"
           :title="category.name" />

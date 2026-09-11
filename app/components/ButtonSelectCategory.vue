@@ -1,60 +1,25 @@
 <!--app/components/ButtonSelectCategory.vue-->
 <script setup>
 const categoriesData = ref([]);
+const loaded = ref(false);
 
 onMounted(async () => {
-  const response = await $fetch('/api/categories');
-  categoriesData.value = response.productCategories.nodes.filter(category => category.products.nodes.length && category.children.nodes.length);
+  try {
+    const response = await $fetch('/api/categories');
+    categoriesData.value = (response.productCategories?.nodes ?? []).filter(category => category.products?.nodes?.length);
+  } catch {
+    categoriesData.value = [];
+  } finally {
+    loaded.value = true;
+  }
 });
 
 const categories = computed(() => categoriesData.value);
 </script>
 
 <template>
-  <div class="slider-container ml-2 lg:ml-4 gap-2 lg:gap-4" v-if="!categories.length">
-    <div class="h-[50px] min-w-36 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton"></div>
-    <div class="h-[50px] relative min-w-36 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-32 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-48 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-32 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-60 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-32 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-36 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-32 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-32 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-28 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-32 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-40 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-32 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
-    <div class="h-[50px] relative min-w-44 bg-neutral-200 dark:bg-neutral-800 rounded-full skeleton items-center flex">
-      <div class="w-[38px] h-[38px] absolute rounded-full bg-neutral-300/50 dark:bg-neutral-900/40 left-2"></div>
-    </div>
+  <div v-if="!loaded" class="ml-2 flex min-w-0 flex-1 gap-2 overflow-hidden lg:ml-4">
+    <div v-for="i in 6" :key="i" class="h-12 min-w-28 rounded-full bg-neutral-200 dark:bg-white/10 skeleton"></div>
   </div>
-  <CarouselCategories v-else :categories="categories" />
+  <CarouselCategories v-else-if="categories.length" :categories="categories" />
 </template>

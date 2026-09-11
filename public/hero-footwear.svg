@@ -1,12 +1,12 @@
 <svg width="1600" height="720" viewBox="0 0 1600 720" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="1600" height="720" fill="#1E1B4B"/>
-  <rect width="1600" height="720" fill="url(#gradient)"/>
+  <rect width="1600" height="720" fill="url(#footwearGradient)"/>
   <circle cx="1200" cy="250" r="245" fill="#6366F1" opacity="0.5"/>
   <circle cx="1380" cy="520" r="190" fill="#22D3EE" opacity="0.3"/>
   <path d="M910 460C1005 330 1190 290 1390 330C1300 455 1120 525 910 460Z" fill="#FFFFFF" opacity="0.16"/>
   <path d="M1010 380C1090 315 1245 305 1340 335" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" opacity="0.2"/>
   <defs>
-    <linearGradient id="gradient" x1="0" y1="0" x2="1600" y2="720" gradientUnits="userSpaceOnUse">
+    <linearGradient id="footwearGradient" x1="0" y1="0" x2="1600" y2="720" gradientUnits="userSpaceOnUse">
       <stop stop-color="#111827"/>
       <stop offset="0.52" stop-color="#312E81"/>
       <stop offset="1" stop-color="#0891B2"/>
