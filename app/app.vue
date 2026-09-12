@@ -6,6 +6,14 @@ const { name, description } = site;
 useHead({
   htmlAttrs: { lang: 'en', class: 'light' },
   titleTemplate: (chunk?: string) => (chunk ? `${chunk} - ${name}` : name),
+  link: [
+    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Libre+Bodoni:wght@400;500;600&family=Montserrat:wght@500;600&display=swap',
+    },
+  ],
 });
 
 useSeoMeta({

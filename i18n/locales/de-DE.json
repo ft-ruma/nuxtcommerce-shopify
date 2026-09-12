@@ -39,7 +39,17 @@
     "sort_by": "Sortieren nach",
     "newest": "Neueste",
     "price_low_high": "Preis: Niedrig bis Hoch",
-    "price_high_low": "Preis: Hoch bis Niedrig"
+    "price_high_low": "Preis: Hoch bis Niedrig",
+    "filters": "Filter",
+    "size": "Größe",
+    "availability": "Verfügbarkeit",
+    "price": "Preis",
+    "in_stock": "Auf Lager",
+    "out_of_stock": "Nicht auf Lager",
+    "show_more": "Mehr anzeigen",
+    "show_less": "Weniger anzeigen",
+    "from": "VON",
+    "to": "BIS"
   },
   "checkout": {
     "title": "Kasse",
@@ -61,7 +71,19 @@
       "order_number": "Bestellnummer",
       "date": "Datum",
       "payment_method": "Zahlungsmethode"
-    }
+    },
+    "contact": "Kontakt",
+    "shipping_address": "Lieferadresse",
+    "order_summary": "Bestellübersicht",
+    "subtotal": "Zwischensumme",
+    "shipping": "Versand",
+    "shipping_free": "Kostenlos",
+    "place_order": "Bestellung aufgeben",
+    "continue_shopping": "Weiter einkaufen",
+    "payment": "Zahlung",
+    "payment_cod": "Nachnahme",
+    "items": "Artikel",
+    "empty_cta": "Zurück zum Shop"
   },
   "product": {
     "originally": "Ursprünglich",
@@ -78,10 +100,13 @@
     "empty": "Ihr Warenkorb ist leer",
     "notting_added": "Sie haben noch keine Artikel in Ihren Warenkorb gelegt.",
     "add_to_cart": "In den Warenkorb",
-    "added_to_cart": "Zum Warenkorb hinzugefügt"
+    "added_to_cart": "Zum Warenkorb hinzugefügt",
+    "checkout": "Zur Kasse"
   },
   "favorites": {
     "nothing_to_show_yet": "Noch nichts zu sehen... noch nicht!",
-    "wishlist_lives_here": "Wunschlisten, die Sie erstellen, werden hier angezeigt. Das sind einige Ihrer Lieblingssachen..."
+    "wishlist_lives_here": "Wunschlisten, die Sie erstellen, werden hier angezeigt. Das sind einige Ihrer Lieblingssachen...",
+    "add": "Zur Wunschliste hinzufügen",
+    "remove": "Von der Wunschliste entfernen"
   }
 }

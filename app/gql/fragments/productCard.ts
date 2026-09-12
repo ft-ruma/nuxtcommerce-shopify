@@ -9,6 +9,23 @@ export const productCardFragment = gql`
     title
     productType
     vendor
+    availableForSale
+    options {
+      name
+      optionValues {
+        name
+      }
+    }
+    priceRange {
+      minVariantPrice {
+        amount
+        currencyCode
+      }
+      maxVariantPrice {
+        amount
+        currencyCode
+      }
+    }
     featuredImage {
       url(transform: { maxWidth: 600 })
     }

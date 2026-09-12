@@ -1,5 +1,7 @@
 <!--app/components/AppHeader.vue-->
 <script setup>
+import { brandItems } from '#shared/brands';
+
 const router = useRouter();
 const route = useRoute();
 const searchQuery = ref((route.query.q || '').toString());
@@ -13,7 +15,7 @@ const searchInputRef = ref(null);
 const cartPanelRef = ref(null);
 const mobileMenuRef = ref(null);
 const navRef = ref(null);
-const cartModal = ref(false);
+const cartModal = useState('cartModal', () => false);
 const activeMenu = ref('');
 const isListening = ref(false);
 const voiceSupported = ref(false);
@@ -75,7 +77,6 @@ const shopMenus = [
   },
 ];
 
-const brandItems = ['Allen Solly', 'Adidas', 'Under Armour', 'Puma', 'ALDO', 'U.S. POLO ASSN.', 'Amanthe', 'Crocodile', 'Skechers', 'Titan', 'Miniso', 'Waves'];
 const mobileSections = ['Shop', 'Brands', 'New Arrivals', 'Sale'];
 
 const search = () => {
@@ -346,11 +347,12 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
               <div class="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
                 <NuxtLink
                   v-for="brand in brandItems"
-                  :key="brand"
-                  :to="searchLink(brand)"
-                  class="rounded-2xl bg-black/5 px-4 py-4 text-center text-sm font-black uppercase tracking-wide transition hover:bg-black hover:text-white dark:bg-white/10 dark:hover:bg-white dark:hover:text-black"
+                  :key="brand.name"
+                  :to="searchLink(brand.name)"
+                  :aria-label="`Shop ${brand.name}`"
+                  class="group flex min-h-[112px] items-center justify-center rounded-2xl bg-neutral-100 px-5 py-5 text-neutral-900 transition hover:bg-black hover:text-white"
                   @click="activeMenu = ''">
-                  {{ brand }}
+                  <BrandMark :brand="brand" />
                 </NuxtLink>
               </div>
             </div>
@@ -465,11 +467,12 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
       <div v-else-if="activeMobileSection === 'Brands'" class="grid grid-cols-2 gap-2">
         <NuxtLink
           v-for="brand in brandItems"
-          :key="`mobile-brand-${brand}`"
-          :to="searchLink(brand)"
-          class="rounded-2xl bg-black/5 px-4 py-4 text-center text-sm font-black uppercase tracking-wide dark:bg-white/15"
+          :key="`mobile-brand-${brand.name}`"
+          :to="searchLink(brand.name)"
+          :aria-label="`Shop ${brand.name}`"
+          class="group flex min-h-[100px] items-center justify-center rounded-2xl bg-neutral-100 px-4 py-4 text-neutral-900"
           @click="mobileMenu = false">
-          {{ brand }}
+          <BrandMark :brand="brand" compact />
         </NuxtLink>
       </div>
 
@@ -562,6 +565,7 @@ const totalQuantity = computed(() => cart.value.reduce((s, i) => s + (i.quantity
               <div class="relative overflow-hidden rounded-2xl pb-[133%]">
                 <NuxtImg :alt="product.name" loading="lazy" :src="product.galleryImages.nodes[0].sourceUrl" class="absolute h-full w-full bg-neutral-200 object-cover" />
                 <NuxtImg :alt="product.name" loading="lazy" :src="product.image.sourceUrl" class="absolute h-full w-full bg-neutral-200 object-cover transition-opacity duration-300 group-hover:opacity-0" />
+                <ButtonWishlist :product="product" variant="card" />
               </div>
               <div class="grid gap-0.5 px-1.5 pb-2 pt-3 text-sm font-semibold">
                 <ProductPrice :sale-price="product.salePrice" :regular-price="product.regularPrice" variant="card" />

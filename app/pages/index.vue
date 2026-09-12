@@ -1,5 +1,7 @@
 <!--app/pages/index.vue-->
 <script setup>
+import { brandItems } from '#shared/brands';
+
 const route = useRoute();
 const { name } = useAppConfig().site;
 const url = useRequestURL();
@@ -56,6 +58,7 @@ const hasFetched = ref(false);
 const tailEl = ref(null);
 const activeHeroIndex = ref(0);
 const heroHover = ref(false);
+const filterOpen = ref(false);
 const pageInfo = ref({ hasNextPage: true, endCursor: null });
 let heroTimer;
 
@@ -118,8 +121,6 @@ const shopTiles = [
   { label: 'Brands', caption: 'Shop the labels', search: 'brand', image: photo('photo-1441986300917-64674bd600d8', 900), fallback: '/hero-brands.svg', span: 'lg:col-span-3', minH: 'min-h-[220px] lg:min-h-[260px]' },
 ];
 
-const brandItems = ['Allen Solly', 'Adidas', 'Under Armour', 'Puma', 'ALDO', 'U.S. POLO ASSN.', 'Amanthe', 'Crocodile', 'Skechers', 'Titan', 'Miniso', 'Waves'];
-
 const isHomeView = computed(() => !route.query.q && !route.query.category);
 const activeHeroSlide = computed(() => heroSlides[activeHeroIndex.value]);
 const catalogTitle = computed(() => {
@@ -147,12 +148,22 @@ const prevHeroSlide = () => {
   activeHeroIndex.value = (activeHeroIndex.value - 1 + heroSlides.length) % heroSlides.length;
 };
 
+const hasActiveFilters = computed(() => {
+  const q = route.query;
+  return Boolean(q.size || q.availability === 'out' || q.minPrice || q.maxPrice);
+});
+
 const variables = computed(() => ({
   search: route.query.q,
   order: route.query.orderby?.toUpperCase() || 'DESC',
   field: route.query.fieldby?.toUpperCase() || 'DATE',
   category: route.query.category,
   after: pageInfo.value.endCursor,
+  size: route.query.size,
+  sizeOption: route.query.sizeOption,
+  availability: route.query.availability,
+  minPrice: route.query.minPrice,
+  maxPrice: route.query.maxPrice,
 }));
 
 async function fetch() {
@@ -203,6 +214,8 @@ watch(
 
 const products = computed(() => productsData.value);
 const productsEmpty = computed(() => hasFetched.value && !isLoading.value && productsData.value.length === 0);
+const showComingSoon = computed(() => isHomeView.value && productsEmpty.value && !hasActiveFilters.value);
+const showFilters = computed(() => !isHomeView.value || hasActiveFilters.value || !productsEmpty.value);
 </script>
 
 <template>
@@ -323,10 +336,11 @@ const productsEmpty = computed(() => hasFetched.value && !isLoading.value && pro
       <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         <NuxtLink
           v-for="brand in brandItems"
-          :key="brand"
-          :to="localePath(`/?q=${encodeURIComponent(brand)}`)"
-          class="rounded-2xl bg-black/5 px-4 py-5 text-center text-sm font-black uppercase tracking-wide transition hover:bg-black hover:text-white dark:bg-white/10 dark:hover:bg-white dark:hover:text-black">
-          {{ brand }}
+          :key="brand.name"
+          :to="localePath(`/?q=${encodeURIComponent(brand.name)}`)"
+          :aria-label="`Shop ${brand.name}`"
+          class="group flex min-h-[120px] items-center justify-center rounded-2xl bg-neutral-100 px-5 py-6 text-neutral-900 transition hover:bg-black hover:text-white">
+          <BrandMark :brand="brand" />
         </NuxtLink>
       </div>
     </div>
@@ -344,22 +358,62 @@ const productsEmpty = computed(() => hasFetched.value && !isLoading.value && pro
       <p class="text-xs font-black uppercase tracking-[0.28em] text-neutral-500 dark:text-neutral-400">Catalog</p>
       <h2 class="text-3xl font-black tracking-tight">New arrivals</h2>
     </div>
-    <ButtonSortBy align="end" />
+    <div class="flex items-center gap-2">
+      <button
+        v-if="showFilters"
+        type="button"
+        class="flex min-h-12 items-center gap-2 rounded-full bg-[#efefef] px-3.5 py-2.5 text-sm font-semibold text-black transition-all hover:bg-[#e2e2e2] active:scale-95 lg:hidden"
+        @click="filterOpen = true">
+        {{ $t('filter.filters') }}
+      </button>
+      <ButtonSortBy align="end" />
+    </div>
   </div>
   <div v-else class="flex items-center px-3 pt-5 lg:px-5">
+    <button
+      v-if="showFilters"
+      type="button"
+      class="mr-2 flex min-h-12 items-center gap-2 rounded-full bg-[#efefef] px-3.5 py-2.5 text-sm font-semibold text-black transition-all hover:bg-[#e2e2e2] active:scale-95 lg:hidden"
+      @click="filterOpen = true">
+      {{ $t('filter.filters') }}
+    </button>
     <ButtonSortBy />
     <ButtonSelectCategory />
   </div>
 
-  <div v-if="!productsEmpty" class="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3 lg:gap-5 p-3 lg:p-5">
-    <ProductCard :products="products" />
-    <ProductsSkeleton v-if="(!products.length || isLoading) && !productsEmpty" />
-    <br ref="tailEl" />
+  <div class="mx-auto flex max-w-screen-2xl items-start gap-4 p-3 lg:gap-6 lg:p-5">
+    <div v-if="showFilters" class="sticky top-24 hidden w-[280px] shrink-0 lg:block">
+      <FilterPanel />
+    </div>
+    <div class="min-w-0 flex-1">
+      <div v-if="!productsEmpty" class="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 lg:gap-5">
+        <ProductCard :products="products" />
+        <ProductsSkeleton v-if="(!products.length || isLoading) && !productsEmpty" />
+        <br ref="tailEl" />
+      </div>
+      <div v-else-if="showComingSoon" class="px-3 py-16 text-center">
+        <p class="text-xs font-black uppercase tracking-[0.28em] text-neutral-500">Coming soon</p>
+        <h3 class="mt-3 text-3xl font-black">Explore the collections above</h3>
+        <p class="mx-auto mt-3 max-w-md text-sm font-semibold text-neutral-500 dark:text-neutral-400">New product drops from the Shopify catalog will appear here as they become available.</p>
+      </div>
+      <ProductsEmpty v-else />
+    </div>
   </div>
-  <div v-else-if="isHomeView" class="mx-auto max-w-screen-2xl px-3 py-16 text-center lg:px-5">
-    <p class="text-xs font-black uppercase tracking-[0.28em] text-neutral-500">Coming soon</p>
-    <h3 class="mt-3 text-3xl font-black">Explore the collections above</h3>
-    <p class="mx-auto mt-3 max-w-md text-sm font-semibold text-neutral-500 dark:text-neutral-400">New product drops from the Shopify catalog will appear here as they become available.</p>
-  </div>
-  <ProductsEmpty v-else />
+
+  <Teleport to="body">
+    <div v-if="filterOpen" class="fixed inset-0 z-[80] lg:hidden">
+      <button type="button" class="absolute inset-0 bg-black/40" aria-label="Close filters" @click="filterOpen = false"></button>
+      <div class="absolute inset-y-0 left-0 flex w-[min(22rem,100%)] flex-col bg-neutral-50 p-3 shadow-2xl">
+        <div class="mb-3 flex items-center justify-between px-1">
+          <h2 class="text-lg font-black">{{ $t('filter.filters') }}</h2>
+          <button type="button" class="flex h-10 w-10 items-center justify-center rounded-full bg-black/5" aria-label="Close filters" @click="filterOpen = false">
+            <UIcon name="i-iconamoon-close" size="18" />
+          </button>
+        </div>
+        <div class="min-h-0 flex-1 overflow-y-auto">
+          <FilterPanel />
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>

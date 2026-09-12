@@ -1,7 +1,13 @@
 <!--app/components/Cart.vue-->
 <script setup>
 const { cart, increment, decrement } = useCart();
-const { order } = useCheckout();
+const { order, cartTotalLabel } = useCheckout();
+const localePath = useLocalePath();
+const cartModal = useState('cartModal', () => false);
+
+const goToCheckout = () => {
+  cartModal.value = false;
+};
 </script>
 
 <template>
@@ -44,7 +50,21 @@ const { order } = useCheckout();
             </div>
           </div>
         </div>
-        <Checkout />
+        <div class="md:w-80 h-full bg-black/5 dark:bg-white/10 my-3 mr-3 p-4 max-md:ml-3 rounded-3xl flex flex-col justify-between">
+          <div>
+            <div class="text-xl font-bold px-2 mb-3">{{ $t('checkout.title') }}</div>
+            <div class="flex justify-between px-2 text-sm font-semibold">
+              <span class="text-neutral-500">{{ $t('checkout.pay.total') }}</span>
+              <span class="text-lg font-black">{{ cartTotalLabel }}</span>
+            </div>
+          </div>
+          <NuxtLink
+            :to="localePath('/checkout')"
+            class="pay-button-bezel mt-5 flex h-12 w-full items-center justify-center rounded-xl text-lg font-semibold text-white"
+            @click="goToCheckout">
+            {{ $t('cart.checkout') }}
+          </NuxtLink>
+        </div>
       </div>
       <EmptyCart v-else />
     </Transition>
@@ -54,5 +74,21 @@ const { order } = useCheckout();
 <style lang="postcss">
 .cart-button-bezel {
   box-shadow: inset 0 -1px 1px 0 rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+.pay-button-bezel {
+  box-shadow: 0 0 0 var(--button-outline, 0px) rgba(92, 222, 131, 0.3), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+    0 1px 1px 0 rgba(0, 0, 0, 0.3);
+  @apply bg-[#23a26d] outline-none transition duration-200;
+  &:hover {
+    @apply brightness-110;
+  }
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 250ms;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -39,7 +39,17 @@
     "sort_by": "Sort by",
     "newest": "Newest",
     "price_low_high": "Price: Low to High",
-    "price_high_low": "Price: High to Low"
+    "price_high_low": "Price: High to Low",
+    "filters": "Filters",
+    "size": "Size",
+    "availability": "Availability",
+    "price": "Price",
+    "in_stock": "In Stock",
+    "out_of_stock": "Out Of Stock",
+    "show_more": "Show More",
+    "show_less": "Show Less",
+    "from": "FROM",
+    "to": "TO"
   },
   "checkout": {
     "title": "Checkout",
@@ -61,7 +71,19 @@
       "order_number": "Order Number",
       "date": "Date",
       "payment_method": "Payment Method"
-    }
+    },
+    "contact": "Contact",
+    "shipping_address": "Shipping address",
+    "order_summary": "Order summary",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "shipping_free": "Free",
+    "place_order": "Place order",
+    "continue_shopping": "Continue shopping",
+    "payment": "Payment",
+    "payment_cod": "Cash on delivery",
+    "items": "Items",
+    "empty_cta": "Back to shop"
   },
   "product": {
     "originally": "Originally",
@@ -78,10 +100,13 @@
     "empty": "Your cart is empty",
     "notting_added": "You haven't added any items to your cart yet.",
     "add_to_cart": "Add to cart",
-    "added_to_cart": "Added to cart"
+    "added_to_cart": "Added to cart",
+    "checkout": "Checkout"
   },
   "favorites": {
     "nothing_to_show_yet": "Nothing to show... yet!",
-    "wishlist_lives_here": "Wishlist you create will live here. These are a few of your favorite things..."
+    "wishlist_lives_here": "Wishlist you create will live here. These are a few of your favorite things...",
+    "add": "Add to wishlist",
+    "remove": "Remove from wishlist"
   }
 }

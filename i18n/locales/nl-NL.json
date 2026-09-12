@@ -39,7 +39,17 @@
     "sort_by": "Sorteren op",
     "newest": "Nieuwste",
     "price_low_high": "Prijs: Laag naar Hoog",
-    "price_high_low": "Prijs: Hoog naar Laag"
+    "price_high_low": "Prijs: Hoog naar Laag",
+    "filters": "Filters",
+    "size": "Maat",
+    "availability": "Beschikbaarheid",
+    "price": "Prijs",
+    "in_stock": "Op voorraad",
+    "out_of_stock": "Niet op voorraad",
+    "show_more": "Meer tonen",
+    "show_less": "Minder tonen",
+    "from": "VAN",
+    "to": "TOT"
   },
   "checkout": {
     "title": "Afrekenen",
@@ -61,7 +71,19 @@
       "order_number": "Bestelnummer",
       "date": "Datum",
       "payment_method": "Betaalmethode"
-    }
+    },
+    "contact": "Contact",
+    "shipping_address": "Verzendadres",
+    "order_summary": "Overzicht",
+    "subtotal": "Subtotaal",
+    "shipping": "Verzending",
+    "shipping_free": "Gratis",
+    "place_order": "Bestelling plaatsen",
+    "continue_shopping": "Verder winkelen",
+    "payment": "Betaling",
+    "payment_cod": "Rembours",
+    "items": "Artikelen",
+    "empty_cta": "Terug naar de shop"
   },
   "product": {
     "originally": "Oorspronkelijk",
@@ -78,10 +100,13 @@
     "empty": "Je winkelwagen is leeg",
     "notting_added": "Je hebt nog geen artikelen aan je winkelwagen toegevoegd.",
     "add_to_cart": "Toevoegen aan winkelwagen",
-    "added_to_cart": "Toegevoegd aan winkelwagen"
+    "added_to_cart": "Toegevoegd aan winkelwagen",
+    "checkout": "Afrekenen"
   },
   "favorites": {
     "nothing_to_show_yet": "Nog niets te zien... nog niet!",
-    "wishlist_lives_here": "De verlanglijst die je maakt, komt hier te staan. Dit zijn een paar van je favoriete dingen..."
+    "wishlist_lives_here": "De verlanglijst die je maakt, komt hier te staan. Dit zijn een paar van je favoriete dingen...",
+    "add": "Toevoegen aan verlanglijst",
+    "remove": "Verwijderen van verlanglijst"
   }
 }

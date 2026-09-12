@@ -124,5 +124,6 @@ export const useCart = () => {
     handleAddToCart,
     increment,
     decrement,
+    clearCart: () => setCart([]),
   };
 };

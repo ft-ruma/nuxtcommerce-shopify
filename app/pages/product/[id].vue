@@ -33,7 +33,7 @@ onMounted(() => {
 
 const product = computed(() => productResult.value);
 
-const sizeOrder = ['xxs', 'xs', 's', 'm', 'l', 'xl', '2xl', '23-24', '25', '26-27', '28-29', '30', '31-32', '33', '34-25'];
+const sizeOrder = ['xxs', 'xs', 's', 'm', 'l', 'xl', '2xl', '7', '8', '9', '10', '11', '23-24', '25', '26-27', '28-29', '30', '31-32', '33', '34-25'];
 
 const sortedVariations = computed(() => {
   if (!product.value.variations?.nodes) return [];
@@ -81,7 +81,8 @@ const { handleAddToCart, addToCartButtonStatus } = useCart();
             '--swiper-pagination-color': 'rgb(0 0 0 / 50%)',
           }"
           :spaceBetween="4"
-          :slidesPerView="1.5"
+          :slidesPerView="1.15"
+          :breakpoints="{ 1024: { slidesPerView: 1, spaceBetween: 0 } }"
           :pagination="{
             dynamicBullets: true,
           }"
@@ -90,10 +91,10 @@ const { handleAddToCart, addToCartButtonStatus } = useCart();
           :thumbs="{ swiper: thumbsSwiper }"
           class="lg:w-[530px] lg:h-[530px] xl:w-[600px] xl:h-[600px] lg:rounded-2xl">
           <swiper-slide @click="isOpenImageSliderModal = true">
-            <NuxtImg :alt="product.name" class="h-full w-full bg-neutral-200 dark:bg-neutral-800" :src="product.image?.sourceUrl" />
+            <ImageMagnifier :src="product.image?.sourceUrl" :alt="product.name" />
           </swiper-slide>
           <swiper-slide @click="isOpenImageSliderModal = true" v-for="(node, i) in product.galleryImages?.nodes" :key="i">
-            <NuxtImg :alt="product.name" class="h-full w-full bg-neutral-200 dark:bg-neutral-800" :src="node.sourceUrl" />
+            <ImageMagnifier :src="node.sourceUrl" :alt="product.name" />
           </swiper-slide>
         </swiper>
       </div>
@@ -124,14 +125,14 @@ const { handleAddToCart, addToCartButtonStatus } = useCart();
           <div class="pb-4 px-3 lg:px-0 border-b border-[#efefef] dark:border-[#262626]">
             <div class="text-sm font-semibold leading-5 opacity-50 flex gap-1">
               {{ $t('product.size') }}:
-              <div class="uppercase">{{ selectedVariation.attributes.nodes.map(attr => attr.value).toString() }}</div>
+              <div class="uppercase">{{ selectedVariation?.attributes?.nodes?.map(attr => attr.value).toString() }}</div>
             </div>
             <div class="flex gap-2 mt-2 mb-4 flex-wrap">
               <label
                 class="py-1 px-3 rounded-md cursor-pointer select-varitaion border-2 border-[#9b9b9b] dark:border-[#8c8c8c] transition-all duration-200"
                 v-for="variation in sortedVariations"
                 :key="variation.databaseId"
-                :class="[variation.stockStatus === 'OUT_OF_STOCK' ? 'disabled' : '', selectedVariation.databaseId === variation.databaseId ? 'selected-varitaion' : '']">
+                :class="[variation.stockStatus === 'OUT_OF_STOCK' ? 'disabled' : '', selectedVariation?.databaseId === variation.databaseId ? 'selected-varitaion' : '']">
                 <input type="radio" class="hidden" name="variation" :value="variation" :disabled="variation.stockStatus === 'OUT_OF_STOCK'" v-model="selectedVariation" />
                 <span class="font-semibold uppercase" :title="`Size: ${variation.attributes.nodes.map(attr => attr.value).toString()}`">
                   {{ variation.attributes.nodes.map(attr => attr.value).toString() }}
@@ -140,8 +141,8 @@ const { handleAddToCart, addToCartButtonStatus } = useCart();
             </div>
             <div class="flex">
               <button
-                @click="handleAddToCart(selectedVariation.databaseId)"
-                :disabled="addToCartButtonStatus !== 'add'"
+                @click="selectedVariation && handleAddToCart(selectedVariation.databaseId)"
+                :disabled="!selectedVariation || addToCartButtonStatus !== 'add'"
                 class="button-bezel w-full h-12 rounded-md relative tracking-wide font-semibold text-white text-sm flex justify-center items-center">
                 <Transition name="slide-up">
                   <div v-if="addToCartButtonStatus === 'add'" class="absolute">{{ $t('cart.add_to_cart') }}</div>

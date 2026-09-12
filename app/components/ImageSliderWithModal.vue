@@ -42,7 +42,7 @@ const images = computed(() => {
       }"
       class="w-full mx-auto"
       arrows>
-      <img :src="item" class="w-full select-none" draggable="false" />
+      <ImageMagnifier :src="item" alt="" />
     </UCarousel>
   </UModal>
 </template>

@@ -4,6 +4,7 @@
 import { getVariantQuery } from '~/gql/queries/getVariant';
 import { getShopifyConfig, shopifyRequestWithInventory } from '~~/server/utils/shopify';
 import { mapCartItem, stockLimit, toGid } from '~~/server/utils/shopifyMappers';
+import { isMockVariantId, toMockCartItem } from '~~/server/utils/mockProducts';
 
 export default defineEventHandler(async event => {
   const body = await readBody<{ productId?: number | string; quantity?: number }>(event);
@@ -12,6 +13,14 @@ export default defineEventHandler(async event => {
 
   if (!/^\d+$/.test(variantId)) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid product' });
+  }
+
+  if (isMockVariantId(variantId)) {
+    const cartItem = toMockCartItem(Number(variantId), quantity);
+    if (!cartItem) {
+      throw createError({ statusCode: 409, statusMessage: 'Insufficient stock' });
+    }
+    return { addToCart: { cartItem } };
   }
 
   const { country } = getShopifyConfig();

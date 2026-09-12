@@ -39,7 +39,17 @@
     "sort_by": "Sorter etter",
     "newest": "Nyeste",
     "price_low_high": "Pris: Lav til Høy",
-    "price_high_low": "Pris: Høy til Lav"
+    "price_high_low": "Pris: Høy til Lav",
+    "filters": "Filtre",
+    "size": "Størrelse",
+    "availability": "Tilgjengelighet",
+    "price": "Pris",
+    "in_stock": "På lager",
+    "out_of_stock": "Utsolgt",
+    "show_more": "Vis mer",
+    "show_less": "Vis mindre",
+    "from": "FRA",
+    "to": "TIL"
   },
   "checkout": {
     "title": "Kasse",
@@ -61,7 +71,19 @@
       "order_number": "Ordrenummer",
       "date": "Dato",
       "payment_method": "Betalingsmetode"
-    }
+    },
+    "contact": "Kontakt",
+    "shipping_address": "Leveringsadresse",
+    "order_summary": "Ordreoppsummering",
+    "subtotal": "Delsum",
+    "shipping": "Frakt",
+    "shipping_free": "Gratis",
+    "place_order": "Legg inn bestilling",
+    "continue_shopping": "Fortsett å handle",
+    "payment": "Betaling",
+    "payment_cod": "Postoppkrav",
+    "items": "Varer",
+    "empty_cta": "Tilbake til butikken"
   },
   "product": {
     "originally": "Opprinnelig",
@@ -78,10 +100,13 @@
     "empty": "Handlekurven din er tom",
     "notting_added": "Du har ikke lagt til noen varer i handlekurven ennå.",
     "add_to_cart": "Legg i handlekurv",
-    "added_to_cart": "Lagt til i handlekurven"
+    "added_to_cart": "Lagt til i handlekurven",
+    "checkout": "Til kassen"
   },
   "favorites": {
     "nothing_to_show_yet": "Ingenting å vise... ennå!",
-    "wishlist_lives_here": "Ønskelister du lager vil vises her. Dette er noen av dine favoritt-ting..."
+    "wishlist_lives_here": "Ønskelister du lager vil vises her. Dette er noen av dine favoritt-ting...",
+    "add": "Legg til i ønskeliste",
+    "remove": "Fjern fra ønskeliste"
   }
 }

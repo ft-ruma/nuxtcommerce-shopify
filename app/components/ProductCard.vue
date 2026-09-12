@@ -16,7 +16,7 @@ defineProps({
             :alt="product.name"
             loading="lazy"
             :title="product.name"
-            :src="product.galleryImages.nodes[0].sourceUrl"
+            :src="product.galleryImages?.nodes?.[0]?.sourceUrl || product.image?.sourceUrl"
             class="absolute h-full w-full dark:bg-neutral-800 bg-neutral-200 object-cover" />
           <NuxtImg
             :alt="product.name"
@@ -24,6 +24,7 @@ defineProps({
             :title="product.name"
             :src="product.image.sourceUrl"
             class="absolute h-full w-full dark:bg-neutral-800 bg-neutral-200 object-cover transition-opacity duration-300 group-hover:opacity-0" />
+          <ButtonWishlist :product="product" variant="card" />
         </div>
         <div class="grid gap-0.5 pt-3 pb-4 px-1.5 text-sm font-semibold">
           <ProductPrice :sale-price="product.salePrice" :regular-price="product.regularPrice" variant="card" />

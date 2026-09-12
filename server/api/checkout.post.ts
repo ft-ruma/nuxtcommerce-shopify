@@ -4,6 +4,7 @@
 import { checkoutMutation } from '~/gql/mutations/checkout';
 import { getShopifyConfig, shopifyRequest } from '~~/server/utils/shopify';
 import { toGid } from '~~/server/utils/shopifyMappers';
+import { isMockVariantId } from '~~/server/utils/mockProducts';
 
 type Body = {
   billing?: Partial<Record<'email' | 'firstName' | 'lastName' | 'phone' | 'city' | 'address1', string>>;
@@ -28,7 +29,7 @@ export default defineEventHandler(async event => {
   const cartLines = lines
     .filter(line => /^\d+$/.test(String(line?.merchandiseId)) && Number(line.quantity) > 0)
     .map(line => ({
-      merchandiseId: toGid('ProductVariant', line.merchandiseId),
+      merchandiseId: String(line.merchandiseId),
       quantity: Math.floor(Number(line.quantity)),
     }));
 
@@ -36,8 +37,23 @@ export default defineEventHandler(async event => {
     throw createError({ statusCode: 400, statusMessage: 'Your cart is empty' });
   }
 
+  const mockCheckout = () => ({
+    mock: true,
+    cartId: `mock-${Date.now()}`,
+    orderNumber: `BGD${Date.now().toString().slice(-8)}`,
+  });
+
+  if (cartLines.some(line => isMockVariantId(line.merchandiseId))) {
+    return mockCheckout();
+  }
+
+  const shopifyLines = cartLines.map(line => ({
+    merchandiseId: toGid('ProductVariant', line.merchandiseId),
+    quantity: line.quantity,
+  }));
+
   const baseInput: Record<string, any> = {
-    lines: cartLines,
+    lines: shopifyLines,
     buyerIdentity: {
       email: clean(billing.email),
       countryCode: country,
@@ -71,16 +87,20 @@ export default defineEventHandler(async event => {
 
   const variables = { country, language: LANGUAGES[String(locale)] };
 
-  let result = (await shopifyRequest<any>(checkoutMutation, { ...variables, input: inputWithAddress }, event)).cartCreate;
+  try {
+    let result = (await shopifyRequest<any>(checkoutMutation, { ...variables, input: inputWithAddress }, event)).cartCreate;
 
-  // If Shopify rejects the prefilled details (e.g. address validation), still send the shopper to checkout.
-  if (!result?.cart) {
-    result = (await shopifyRequest<any>(checkoutMutation, { ...variables, input: { lines: cartLines } }, event)).cartCreate;
+    if (!result?.cart) {
+      result = (await shopifyRequest<any>(checkoutMutation, { ...variables, input: { lines: shopifyLines } }, event)).cartCreate;
+    }
+
+    if (!result?.cart?.checkoutUrl) {
+      throw createError({ statusCode: 400, statusMessage: result?.userErrors?.[0]?.message || 'Could not start checkout' });
+    }
+
+    return { cartId: result.cart.id, checkoutUrl: result.cart.checkoutUrl };
+  } catch (error: any) {
+    if (error?.statusCode) throw error;
+    throw createError({ statusCode: 502, statusMessage: error?.statusMessage || 'Could not start checkout' });
   }
-
-  if (!result?.cart?.checkoutUrl) {
-    throw createError({ statusCode: 400, statusMessage: result?.userErrors?.[0]?.message || 'Could not start checkout' });
-  }
-
-  return { cartId: result.cart.id, checkoutUrl: result.cart.checkoutUrl };
 });

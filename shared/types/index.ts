@@ -64,7 +64,9 @@ export interface CheckoutOrder {
 
 export interface CheckoutResponse {
   cartId: string;
-  checkoutUrl: string;
+  checkoutUrl?: string;
+  mock?: boolean;
+  orderNumber?: string;
 }
 
 export type CheckoutStatus = 'order' | 'processing';

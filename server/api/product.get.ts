@@ -2,12 +2,19 @@
 import { getProductQuery, getProductRecommendationsQuery } from '~/gql/queries/getProduct';
 import { getShopifyConfig, shopifyRequest, shopifyRequestWithInventory } from '~~/server/utils/shopify';
 import { mapProductDetail, toGid } from '~~/server/utils/shopifyMappers';
+import { findMockProduct, isMockProductId, toMockProductDetail } from '~~/server/utils/mockProducts';
 
 // URL format: /product/{handle}-{productId} or /product/{handle}-{colour}-{productId}
 // The page splits the last segment off as `sku`, which is the numeric Shopify product ID.
 export default cachedEventHandler(
   async event => {
     const { slug = '', sku = '' } = getQuery(event) as { slug?: string; sku?: string };
+
+    const mock = isMockProductId(sku) ? findMockProduct(sku) : findMockProduct(slug);
+    if (mock) {
+      return { product: toMockProductDetail(mock) };
+    }
+
     const { country } = getShopifyConfig();
 
     let product: any = null;
@@ -15,7 +22,6 @@ export default cachedEventHandler(
       product = (await shopifyRequestWithInventory<any>(getProductQuery, { id: toGid('Product', sku), country })).product;
     }
     if (!product && slug) {
-      // Fallback for links that carry a handle only.
       product = (await shopifyRequestWithInventory<any>(getProductQuery, { handle: slug, country })).product;
     }
     if (!product) {
